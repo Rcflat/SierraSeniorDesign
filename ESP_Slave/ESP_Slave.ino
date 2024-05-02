@@ -1,6 +1,9 @@
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
+#include <ArduinoJson.h>
+
+JsonDocument doc;
 
 char ssid[] = "NETGEAR32";          // your network SSID (name)
 char pass[] = "breezybreeze113";   // your network password
@@ -9,6 +12,8 @@ unsigned int localPort = 4290;      // Local port to listen on
 
 char serverIP[] = "192.168.1.4";    // IP address of the Arduino server
 unsigned int serverPort = 4292;     // Port of the Arduino server
+char packetBuffer1[255];
+char packetBuffer2[255];
 
 WiFiUDP udp;
 
@@ -26,22 +31,20 @@ void setup() {
 
 void loop() {
   // Handle Serial1 data if available
-  int packetBuffer = Serial1.read();
-  if (packetBuffer) {
-    sendMessage(packetBuffer);
+  
+  if (Serial1.readBytes(packetBuffer1, 255) == 255) {
+    udp.beginPacket(serverIP, serverPort);  // Begin sending data to server
+    udp.write((const uint8_t*)packetBuffer1, 255);
+    udp.endPacket();  // End sending data
+    Serial.println(packetBuffer1);
   }
   // Handle UDP packet if available
   int packetSize = udp.parsePacket();
   if (packetSize) {
-    char packetBuffer[255];
-    udp.read(packetBuffer, 255);
+    udp.read(packetBuffer2, 255);
     Serial.print("Received from server: ");
-    Serial.println(packetBuffer);
+    Serial.println(packetBuffer2);
   }
-
-  // Other non-blocking tasks can be added here
-
-  delay(150); // This delay is optional and can be adjusted based on your requirements
 }
 
 void connectToWiFi() {
@@ -53,7 +56,5 @@ void connectToWiFi() {
 }
 
 void sendMessage(int packetBuffer) {
-  udp.beginPacket(serverIP, serverPort);  // Begin sending data to server
-  udp.print(packetBuffer);
-  udp.endPacket();  // End sending data
+  
 }

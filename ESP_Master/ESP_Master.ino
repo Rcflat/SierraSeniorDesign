@@ -1,8 +1,12 @@
 #include <Bluepad32.h>
+#include <ArduinoJson.h>
 
 ControllerPtr myControllers[BP32_MAX_GAMEPADS];
 
-char controllerInfo[255];
+JsonDocument doc; // packet name
+
+const int BUFFER_SIZE = 255;
+char controllerInfo[BUFFER_SIZE];
 
 // This callback gets called any time a new gamepad is connected.
 // Up to 4 gamepads can be connected at the same time.
@@ -18,9 +22,6 @@ void onConnectedController(ControllerPtr ctl) {
             ControllerProperties properties = ctl->getProperties();
             Serial.printf(controllerInfo, "Controller model: %s, VID=0x%04x, PID=0x%04x\n", ctl->getModelName().c_str(), properties.vendor_id,
                            properties.product_id);
-            sprintf(controllerInfo, "Controller model: %s, VID=0x%04x, PID=0x%04x\n", ctl->getModelName().c_str(), properties.vendor_id,
-                           properties.product_id);
-            Serial1.printf(controllerInfo);
             myControllers[i] = ctl;
             foundEmptySlot = true;
             break;
@@ -28,8 +29,6 @@ void onConnectedController(ControllerPtr ctl) {
     }
     if (!foundEmptySlot) {
         Serial.printf("CALLBACK: Controller connected, but could not found empty slot");
-        sprintf(controllerInfo, "CALLBACK: Controller connected, but could not found empty slot");
-        Serial1.printf(controllerInfo);
     }
 }
 
@@ -39,8 +38,6 @@ void onDisconnectedController(ControllerPtr ctl) {
     for (int i = 0; i < BP32_MAX_GAMEPADS; i++) {
         if (myControllers[i] == ctl) {
             Serial.printf("CALLBACK: Controller disconnected from index=%d\n", i);
-            sprintf(controllerInfo, "CALLBACK: Controller disconnected from index=%d\n", i);
-            Serial1.printf(controllerInfo);
             myControllers[i] = nullptr;
             foundController = true;
             break;
@@ -49,53 +46,42 @@ void onDisconnectedController(ControllerPtr ctl) {
 
     if (!foundController) {
         Serial.println("CALLBACK: Controller disconnected, but not found in myControllers");
-        sprintf(controllerInfo, "CALLBACK: Controller disconnected, but not found in myControllers");
-        Serial1.printf(controllerInfo);
     }
 }
 
 void dumpGamepad(ControllerPtr ctl) {
-    Serial.printf(controllerInfo, 
-        "idx=%d, dpad: 0x%02x, buttons: 0x%04x, axis L: %4d, %4d, axis R: %4d, %4d, brake: %4d, throttle: %4d, "
-        "misc: 0x%02x, gyro x:%6d y:%6d z:%6d, accel x:%6d y:%6d z:%6d\n",
-        ctl->index(),        // Controller Index
-        ctl->dpad(),         // D-pad
-        ctl->buttons(),      // bitmask of pressed buttons
-        ctl->axisX(),        // (-511 - 512) left X Axis
-        ctl->axisY(),        // (-511 - 512) left Y axis
-        ctl->axisRX(),       // (-511 - 512) right X axis
-        ctl->axisRY(),       // (-511 - 512) right Y axis
-        ctl->brake(),        // (0 - 1023): brake button
-        ctl->throttle(),     // (0 - 1023): throttle (AKA gas) button
-        ctl->miscButtons(),  // bitmask of pressed "misc" buttons
-        ctl->gyroX(),        // Gyro X
-        ctl->gyroY(),        // Gyro Y
-        ctl->gyroZ(),        // Gyro Z
-        ctl->accelX(),       // Accelerometer X
-        ctl->accelY(),       // Accelerometer Y
-        ctl->accelZ()        // Accelerometer Z
-    );
-    sprintf(
-        "idx=%d, dpad: 0x%02x, buttons: 0x%04x, axis L: %4d, %4d, axis R: %4d, %4d, brake: %4d, throttle: %4d, "
-        "misc: 0x%02x, gyro x:%6d y:%6d z:%6d, accel x:%6d y:%6d z:%6d\n",
-        ctl->index(),        // Controller Index
-        ctl->dpad(),         // D-pad
-        ctl->buttons(),      // bitmask of pressed buttons
-        ctl->axisX(),        // (-511 - 512) left X Axis
-        ctl->axisY(),        // (-511 - 512) left Y axis
-        ctl->axisRX(),       // (-511 - 512) right X axis
-        ctl->axisRY(),       // (-511 - 512) right Y axis
-        ctl->brake(),        // (0 - 1023): brake button
-        ctl->throttle(),     // (0 - 1023): throttle (AKA gas) button
-        ctl->miscButtons(),  // bitmask of pressed "misc" buttons
-        ctl->gyroX(),        // Gyro X
-        ctl->gyroY(),        // Gyro Y
-        ctl->gyroZ(),        // Gyro Z
-        ctl->accelX(),       // Accelerometer X
-        ctl->accelY(),       // Accelerometer Y
-        ctl->accelZ()        // Accelerometer Z
-    );
-    Serial1.printf(controllerInfo);
+    doc["index"] = ctl->index();        // Controller Index
+    doc["dpad"] = ctl->dpad();         // D-pad
+    doc["buttons"] = ctl->buttons();      // bitmask of pressed buttons
+    doc["axisX"] = ctl->axisX();        // (-511 - 512) left X Axis
+    doc["axisY"] = ctl->axisY();        // (-511 - 512) left Y axis
+    doc["axisRX"] = ctl->axisRX();       // (-511 - 512) right X axis
+    doc["axisRY"] = ctl->axisRY();       // (-511 - 512) right Y axis
+    doc["brake"] = ctl->brake();        // (0 - 1023): brake button
+    doc["throttle"] = ctl->throttle();     // (0 - 1023): throttle (AKA gas) button
+    doc["miscButtons"] = ctl->miscButtons();  // bitmask of pressed "misc" buttons
+    doc["gyroX"] = ctl->gyroX();        // Gyro X
+    doc["gyroY"] = ctl->gyroY();        // Gyro Y
+    doc["gyroZ"] = ctl->gyroZ();        // Gyro Z
+    doc["accelX"] = ctl->accelX();       // Accelerometer X
+    doc["accelY"] = ctl->accelY();       // Accelerometer Y
+    doc["accelZ"] = ctl->accelZ();       // Accelerometer Z
+
+    // Serialize the JSON object into a char array
+    size_t bytesWritten = serializeJson(doc, controllerInfo, BUFFER_SIZE);
+
+    // Check if serialization was successful
+    if (bytesWritten < BUFFER_SIZE) {
+      // Send the serialized JSON object over serial
+      Serial.printf("bytes written: %d\n", bytesWritten);
+      Serial.write(controllerInfo, BUFFER_SIZE);
+      
+      Serial.println();
+      Serial1.write(controllerInfo, BUFFER_SIZE);
+      Serial.println(); // Add newline for readability or termination
+    } else {
+      Serial.println("JSON object too large to fit in buffer");
+    }
 }
 
 void dumpMouse(ControllerPtr ctl) {
@@ -259,15 +245,6 @@ void processControllers() {
         if (myController && myController->isConnected() && myController->hasData()) {
             if (myController->isGamepad()) {
                 processGamepad(myController);
-            } else if (myController->isMouse()) {
-                processMouse(myController);
-            } else if (myController->isKeyboard()) {
-                processKeyboard(myController);
-            } else if (myController->isBalanceBoard()) {
-                processBalanceBoard(myController);
-            } else {
-                Serial.println("Unsupported controller");
-                Serial1.println("Unsupported controller");
             }
         }
     }
@@ -277,10 +254,8 @@ void setup() {
   Serial.begin(115200);//open serial via USB to PC on default port
   Serial1.begin(115200, SERIAL_8N1, 16, 17);//open the other serial port
   Serial.printf("Firmware: %s\n", BP32.firmwareVersion());
-  Serial1.printf("Firmware: %s\n", BP32.firmwareVersion());
   const uint8_t* addr = BP32.localBdAddress();
   Serial.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
-  Serial1.printf("BD Addr: %2X:%2X:%2X:%2X:%2X:%2X\n", addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
   BP32.setup(&onConnectedController, &onDisconnectedController);
   BP32.forgetBluetoothKeys();
   BP32.enableVirtualDevice(true);
