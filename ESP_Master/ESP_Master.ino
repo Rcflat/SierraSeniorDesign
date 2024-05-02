@@ -69,15 +69,16 @@ void dumpGamepad(ControllerPtr ctl) {
 
     // Serialize the JSON object into a char array
     size_t bytesWritten = serializeJson(doc, controllerInfo, BUFFER_SIZE);
+    controllerInfo[bytesWritten++] = '\n';
 
     // Check if serialization was successful
     if (bytesWritten < BUFFER_SIZE) {
       // Send the serialized JSON object over serial
       Serial.printf("bytes written: %d\n", bytesWritten);
-      Serial.write(controllerInfo, BUFFER_SIZE);
-      
+      Serial.write(controllerInfo, bytesWritten);
       Serial.println();
-      Serial1.write(controllerInfo, BUFFER_SIZE);
+
+      Serial1.write(controllerInfo, bytesWritten);
       Serial.println(); // Add newline for readability or termination
     } else {
       Serial.println("JSON object too large to fit in buffer");

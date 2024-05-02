@@ -28,23 +28,24 @@ char  ReplyBuffer[] = "acknowledged";       // a string to send back
 WiFiUDP Udp;
 
 void setup() {
-  //Initialize serial and wait for port to open:
-  Serial.begin(115200);
+  
+  Serial.begin(115200); //Initialize serial and wait for port to open:
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  // check for the presence of the shield:
-  if (WiFi.status() == WL_NO_SHIELD) {
+  
+  if (WiFi.status() == WL_NO_SHIELD) { // check for the presence of the shield:
     Serial.println("WiFi shield not present");
     // don't continue:
     while (true);
   }
-  String fv = WiFi.firmwareVersion();
+
+  String fv = WiFi.firmwareVersion(); // check firmware version
   if (fv != "1.1.0") {
     Serial.println("Please upgrade the firmware");
   }
-  // attempt to connect to Wifi network:
-  while (status != WL_CONNECTED) {
+  
+  while (status != WL_CONNECTED) { // attempt to connect to Wifi network:
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
     // Connect to WPA/WPA2 network. Change this line if using open or WEP network:

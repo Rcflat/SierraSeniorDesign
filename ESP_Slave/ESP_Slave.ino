@@ -12,7 +12,6 @@ unsigned int localPort = 4290;      // Local port to listen on
 
 char serverIP[] = "192.168.1.4";    // IP address of the Arduino server
 unsigned int serverPort = 4292;     // Port of the Arduino server
-char packetBuffer1[255];
 char packetBuffer2[255];
 
 WiFiUDP udp;
@@ -32,9 +31,10 @@ void setup() {
 void loop() {
   // Handle Serial1 data if available
   
-  if (Serial1.readBytes(packetBuffer1, 255) == 255) {
+  if (Serial1.available()) {
+    String packetBuffer1 = Serial1.readStringUntil('\n');
     udp.beginPacket(serverIP, serverPort);  // Begin sending data to server
-    udp.write((const uint8_t*)packetBuffer1, 255);
+    udp.write((uint8_t*)packetBuffer1.c_str(), 255);
     udp.endPacket();  // End sending data
     Serial.println(packetBuffer1);
   }
