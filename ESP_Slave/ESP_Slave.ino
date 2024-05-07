@@ -10,7 +10,7 @@ char pass[] = "breezybreeze113";   // your network password
 
 unsigned int localPort = 4290;      // Local port to listen on
 
-char serverIP[] = "192.168.1.4";    // IP address of the Arduino server
+char serverIP[] = "192.168.1.7";    // IP address of the Arduino server
 unsigned int serverPort = 4292;     // Port of the Arduino server
 char packetBuffer2[255];
 
@@ -31,15 +31,15 @@ void setup() {
 void loop() {
   // Handle Serial1 data if available
   
-  if (Serial1.available()) {
-    String packetBuffer1 = Serial1.readStringUntil('\n');
+  if (Serial1.available()) { // wait until there is information recived from the Serial1 port
+    String packetBuffer1 = Serial1.readStringUntil('\n'); // parse the information through the use of newline characters
     udp.beginPacket(serverIP, serverPort);  // Begin sending data to server
     udp.write((uint8_t*)packetBuffer1.c_str(), 255);
     udp.endPacket();  // End sending data
     Serial.println(packetBuffer1);
   }
-  // Handle UDP packet if available
-  int packetSize = udp.parsePacket();
+  
+  int packetSize = udp.parsePacket(); // await awknowledgement from the server that the JSON object was recieved
   if (packetSize) {
     udp.read(packetBuffer2, 255);
     Serial.print("Received from server: ");
@@ -55,6 +55,3 @@ void connectToWiFi() {
   }
 }
 
-void sendMessage(int packetBuffer) {
-  
-}

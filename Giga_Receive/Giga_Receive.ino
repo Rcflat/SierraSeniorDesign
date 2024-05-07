@@ -1,31 +1,23 @@
-/*
-  WiFi UDP Send and Receive String
-  This sketch wait an UDP packet on localPort using a WiFi shield.
-  When a packet is received an Acknowledge packet is sent to the client on port remotePort
-  Circuit:
-  * WiFi shield attached
-  created 30 December 2012
-  by dlf (Metodo2 srl)
-*/
-
 #include <SPI.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
 #include <StreamUtils.h>
+#include <Servo.h>
 
 JsonDocument doc;
 
 int status = WL_IDLE_STATUS;
 char ssid[] = "NETGEAR32"; //  your network SSID (name)
 char pass[] = "breezybreeze113";    // your network password (use for WPA, or use as key for WEP)
-
-unsigned int localPort = 4292;      // local port to listen on
-
+unsigned int localPort = 4292; // local port to listen on
 char packetBuffer[255]; //buffer to hold incoming packet
-char  ReplyBuffer[] = "acknowledged";       // a string to send back
+char  ReplyBuffer[] = "acknowledged"; // awknowledgement string
 
 WiFiUDP Udp;
+
+Servo myServoS1;
+Servo myServoS2;
 
 void setup() {
   
@@ -33,7 +25,41 @@ void setup() {
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
-  
+
+  initializationWiFiStatus(); // initialize the WiFi on boot (plus firmwave check)
+  pinMapping();
+
+}
+
+void loop() {
+  int packetSize = Udp.parsePacket(); // if there's data being recieved from a client, read the packet
+  if (packetSize) {
+    Serial.print("Received packet of size "); // print out information about sender to serial port
+    Serial.print(packetSize);
+    Serial.print(" From ");
+    IPAddress remoteIp = Udp.remoteIP();
+    Serial.print(remoteIp);
+    Serial.print(", port ");
+    Serial.println(Udp.remotePort());
+
+    int len = Udp.read(packetBuffer, 255); // print contents of packet to serial port for monitoring
+    if (len > 0) {
+      packetBuffer[len] = 0;
+      // Serial.println("Contents:");
+      // Serial.println(packetBuffer);
+      deserializeJson(doc, packetBuffer);
+      updateValues();
+    }
+
+    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort()); // send a reply, to the IP address and port that sent us the packet we received
+    Udp.write(ReplyBuffer);
+    Udp.endPacket();
+
+    
+  }
+}
+
+void initializationWiFiStatus(){ // used in setup put here to improve readability
   if (WiFi.status() == WL_NO_SHIELD) { // check for the presence of the shield:
     Serial.println("WiFi shield not present");
     // don't continue:
@@ -48,56 +74,40 @@ void setup() {
   while (status != WL_CONNECTED) { // attempt to connect to Wifi network:
     Serial.print("Attempting to connect to SSID: ");
     Serial.println(ssid);
-    // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
-    status = WiFi.begin(ssid, pass);
-    // wait 10 seconds for connection:
-    delay(1000);
+    status = WiFi.begin(ssid, pass); // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+    delay(1000); // wait 1 second for connection:
+    if (status == WL_CONNECTED){
+      Serial.println("Connected to wifi");
+      printWifiStatus();
+      Serial.println("\nStarting connection to server...");
+      Udp.begin(localPort); // connect to specified port on the router once connection is established
+    }
   }
-  Serial.println("Connected to wifi");
-  printWifiStatus();
-  Serial.println("\nStarting connection to server...");
-  // if you get a connection, report back via serial:
-  Udp.begin(localPort);
 }
 
-void loop() {
-  // if there's data available, read a packet
-  int packetSize = Udp.parsePacket();
-  if (packetSize) {
-    Serial.print("Received packet of size ");
-    Serial.print(packetSize);
-    Serial.print(" From ");
-    IPAddress remoteIp = Udp.remoteIP();
-    Serial.print(remoteIp);
-    Serial.print(", port ");
-    Serial.println(Udp.remotePort());
-    // read the packet into packetBufffer
-    int len = Udp.read(packetBuffer, 255);
-    if (len > 0) {
-      packetBuffer[len] = 0;
-      Serial.println("Contents:");
-      Serial.println(packetBuffer);
-    // serializeJson(doc, Serial);
-    }
-  
+void pinMapping(){ // for now only works with controller
+  const int outputPinS1 = 2; // PWM output pin for S1
+  const int outputPinS2 = 3; // PWM output pin for S2
 
+  myServoS1.attach(outputPinS1); // Attaching servo to the pin
+  myServoS2.attach(outputPinS2); // Attaching servo to the pin
+} 
 
-    // send a reply, to the IP address and port that sent us the packet we received
-    Udp.beginPacket(Udp.remoteIP(), Udp.remotePort());
-    Udp.write(ReplyBuffer);
-    Udp.endPacket();
-  }
+void updateValues(){ // for now only works with controller
+  int sensorValueS1 = doc["axisY"];  //analogRead(potPin); // Read potentiometer value (-512-512)
+  int sensorValueS2 = doc["axisY"];  //analogRead(potPin); // Read potentiometer value (-512-512)
+  int pulseWidthS1 = map(sensorValueS1, -512, 512, 1000, 2000); // Map potentiometer value to pulse width (1000 - 2000 microSeconds)
+  int pulseWidthS2 = map(sensorValueS2, -512, 512, 1000, 1950); // Map potentiometer value to pulse width (1000 - 2000 microSeconds)
+  myServoS1.writeMicroseconds(pulseWidthS1); // Set servo position based on pulse width
+  myServoS2.writeMicroseconds(pulseWidthS2); // Set servo position based on pulse width
 }
 
 void printWifiStatus() {
-  // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
   Serial.println(WiFi.SSID());
-  // print your WiFi shield's IP address:
   IPAddress ip = WiFi.localIP();
   Serial.print("IP Address: ");
   Serial.println(ip);
-  // print the received signal strength:
   long rssi = WiFi.RSSI();
   Serial.print("signal strength (RSSI):");
   Serial.print(rssi);

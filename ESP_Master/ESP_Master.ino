@@ -160,6 +160,7 @@ void processGamepad(ControllerPtr ctl) {
        // Turn on the 4 LED. Each bit represents one LED.
        if (led < 4){
          led++;
+         doc[]
        }
        // Some gamepads like the DS3, DualSense, Nintendo Wii, Nintendo Switch
        // support changing the "Player LEDs": those 4 LEDs that usually indicate
