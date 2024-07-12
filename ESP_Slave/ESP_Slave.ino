@@ -10,7 +10,7 @@ char pass[] = "breezybreeze113";   // your network password
 
 unsigned int localPort = 4290;      // Local port to listen on
 
-char serverIP[] = "192.168.1.7";    // IP address of the Arduino server
+char serverIP[] = "192.168.1.4";    // IP address of the Arduino server
 unsigned int serverPort = 4292;     // Port of the Arduino server
 char packetBuffer2[255];
 

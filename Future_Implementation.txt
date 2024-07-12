@@ -1,0 +1,5 @@
+TODO:
+
+    ** Make a GUI that will perform multiple functionalities (mainly logging and providing feedback from the camera)
+
+    ** Remove the middle-man arduinos except for the Arduino Giga R1 and implement the same functionalities as the prevoius network
