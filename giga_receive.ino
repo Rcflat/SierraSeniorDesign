@@ -36,6 +36,16 @@ IPAddress dns(8, 8, 8, 8);               // Replaced with your DNS
 WiFiUDP udp;
 const unsigned int localPort = 8888;
 
+void pinMapping(){ // for now only works with controller
+  const int outputPinS1 = 2; // PWM output pin for S1
+  const int outputPinS2 = 3; // PWM output pin for S2
+  const int outputPinS3 = 4; // Servo output pin for S3
+  const int outputPinS4 = 5; // Servo output pin for S4
+
+  myServoS1.attach(outputPinS1); // Attaching servo to the pin
+  myServoS2.attach(outputPinS2); // Attaching servo to the pin
+} 
+
 void setup() {
   Serial.begin(115200);
   WiFi.config(ip, gateway, subnet, dns); // Set the static IP before connecting
@@ -48,6 +58,8 @@ void setup() {
 
   Serial.println("Connected to WiFi");
   udp.begin(localPort);
+
+  pinMapping();
 }
 
 void loop() {
