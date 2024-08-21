@@ -1,7 +1,0 @@
-TODO:
-
-    ** Make a GUI that will perform multiple functionalities (mainly logging and providing feedback from the camera)
-
-    ** Remove the middle-man arduinos except for the Arduino Giga R1 and implement the same functionalities as the prevoius network
-
-    ** On Robot dynamically connect to router based on user input (don't want to hardcode router in case of hardware malfunctions)

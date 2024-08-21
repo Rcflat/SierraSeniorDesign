@@ -1,0 +1,56 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    width: 100%;
+}
+
+.log-panel {
+    width: 25%;
+    background-color: #f1f1f1;
+    padding: 20px;
+    overflow-y: auto;
+    border-right: 1px solid #ccc;
+}
+
+.log-panel h2 {
+    margin-top: 0;
+}
+
+#log {
+    margin-top: 10px;
+    border-top: 1px solid #ccc;
+    padding-top: 10px;
+}
+
+ul {
+    list-style-type: none;
+    padding-left: 20px;
+}
+
+ul ul {
+    display: none;
+}
+
+.directory {
+    cursor: pointer;
+}
+
+.file {
+    cursor: pointer;
+    color: blue;
+}
+
+.directory::before, .file::before {
+    content: "📁 ";
+}
+
+.file::before {
+    content: "📄 ";
+}
