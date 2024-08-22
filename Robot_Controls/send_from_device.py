@@ -31,8 +31,8 @@ def send_data_over_wifi(data, arduino_ip, arduino_port):
     sock.close()
 
 if __name__ == "__main__":
-    from capture_input import capture_input
-    from connect_controller import connect_controller
+    from Robot_Controls.capture_input import capture_input
+    from Robot_Controls.connect_controller import connect_controller
     
     arduino_ip = "192.168.1.50"  # Replace with your Arduino's IP address
     arduino_port = 8888  # Replace with your Arduino's port number

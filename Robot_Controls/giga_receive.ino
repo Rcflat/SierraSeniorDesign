@@ -37,12 +37,15 @@ IPAddress dns(8, 8, 8, 8);               // Replaced with your DNS
 WiFiUDP udp;
 const unsigned int localPort = 8888;
 
-const int LEDoutputPin = 9; // output pin for LED
+Servo myServoS1;
+Servo myServoS2;
+
 void pinMapping(){ // for now only works with controller
   const int outputPinS1 = 2; // PWM output pin for S1
   const int outputPinS2 = 3; // PWM output pin for S2
   const int outputPinS3 = 4; // Servo output pin for S3
   const int outputPinS4 = 5; // Servo output pin for S4
+  const int LEDoutputPin = 9; // output pin for LED
 
   myServoS1.attach(outputPinS1); // Attaching servo to the pin
   myServoS2.attach(outputPinS2); // Attaching servo to the pin
@@ -50,7 +53,7 @@ void pinMapping(){ // for now only works with controller
 
 void updateValues(){ // for now only works with controller
 
-  int sensorValueS1 = doc["axisY"];  //analogRead(potPin); // Read potentiometer value (-512-512)
+  int sensorValueS1 = doc[""];  //analogRead(potPin); // Read potentiometer value (-512-512)
   int sensorValueS2 = doc["axisY"];  //analogRead(potPin); // Read potentiometer value (-512-512)
 
   // d-pad logic will go on client side in the future but for the preview day I am putting it on the robot to make my life simpler
