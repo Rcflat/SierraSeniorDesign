@@ -1,9 +1,22 @@
 @echo off
-cd /d "%~dp0platform-tools"
 
+:: Check if Iriun Webcam client is already running
+tasklist /FI "IMAGENAME eq iriunwebcam.exe" | find /I "iriunwebcam.exe" >nul
+if %errorlevel% == 0 (
+    echo Iriun Webcam client is already running.
+) else (
+    echo Starting Iriun Webcam client...
+    start "Iriun Webcam" "%~dp0Iriun Webcam\iriunwebcam.exe"
+    set "IRIUN_PID=%!"
+    
+    :: Wait for a few seconds to ensure the client has started
+    timeout /t 5 /nobreak >nul
+)
+
+cd /d "%~dp0platform-tools"
 adb connect 192.168.1.100:5555
 adb shell input keyevent KEYCODE_WAKEUP
-adb shell input keyevent KEYCODE_CAMERA
+adb shell monkey -p com.jacksoftw.webcam 1
 
 :: Start the Node.js server in the background and capture the process ID (PID)
 cd ..
@@ -58,6 +71,8 @@ if %errorlevel% == 0 goto waitloop
 echo "Cleaning up..."
 :: Terminate the Node.js server process if it's still running
 taskkill /PID %NODE_PID% /F >nul 2>&1
+:: Terminate the Iriun Webcam client process if it's still running
+taskkill /PID %IRIUN_PID% /F >nul 2>&1
 cd "platform-tools"
 adb disconnect 192.168.1.100:5555
 exit /b
