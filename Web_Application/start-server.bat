@@ -1,13 +1,13 @@
 @echo off
 
-:: Check if Iriun Webcam client is already running
-tasklist /FI "IMAGENAME eq iriunwebcam.exe" | find /I "iriunwebcam.exe" >nul
+:: Check if Camo client is already running
+tasklist /FI "IMAGENAME eq CamoStudio.exe" | find /I "CamoStudio.exe" >nul
 if %errorlevel% == 0 (
-    echo Iriun Webcam client is already running.
+    echo Camo client is already running.
 ) else (
-    echo Starting Iriun Webcam client...
-    start "Iriun Webcam" "%~dp0Iriun Webcam\iriunwebcam.exe"
-    set "IRIUN_PID=%!"
+    echo Starting Camo client...
+    start /MIN "Camo Studio" "%~dp0Camo\CamoStudio.exe"
+    set "CAMO_PID=%!"
     
     :: Wait for a few seconds to ensure the client has started
     timeout /t 5 /nobreak >nul
@@ -16,7 +16,9 @@ if %errorlevel% == 0 (
 cd /d "%~dp0platform-tools"
 adb connect 192.168.1.100:5555
 adb shell input keyevent KEYCODE_WAKEUP
-adb shell monkey -p com.jacksoftw.webcam 1
+
+:: Start the Camo app on your Android device
+adb shell monkey -p com.reincubate.camo 1
 
 :: Start the Node.js server in the background and capture the process ID (PID)
 cd ..
@@ -71,10 +73,11 @@ if %errorlevel% == 0 goto waitloop
 echo "Cleaning up..."
 :: Terminate the Node.js server process if it's still running
 taskkill /PID %NODE_PID% /F >nul 2>&1
-:: Terminate the Iriun Webcam client process if it's still running
-taskkill /PID %IRIUN_PID% /F >nul 2>&1
+
+:: Terminate the Camo client process if it's still running
+taskkill /PID %CAMO_PID% /F >nul 2>&1
+
 cd "platform-tools"
 adb disconnect 192.168.1.100:5555
 exit /b
-
 
