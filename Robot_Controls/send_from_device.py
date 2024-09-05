@@ -43,18 +43,24 @@ def list_available_cameras():
     return available_cameras
 
 def initialize_camera():
-    # Try to open the default camera (index 0)
-    cap = cv2.VideoCapture(0)  # Replace '0' with the desired camera index if needed
-    if not cap.isOpened():
-        available_cameras = list_available_cameras()
-        if available_cameras:
-            print(f"Error: Could not open camera. Available cameras: {available_cameras}")
-        else:
-            print("Error: No available cameras found.")
+    # Check for available cameras
+    available_cameras = list_available_cameras()
+    if not available_cameras:
+        print("Error: No available cameras found.")
         return None
-    print(f"Cap Being Utilized: {cap}")
-    return cap
 
+    print(f"Available cameras: {available_cameras}")
+
+    # Try to open the first available camera
+    camera_index = available_cameras[2]
+    cap = cv2.VideoCapture(camera_index)
+
+    if not cap.isOpened():
+        print(f"Error: Could not open camera at index {camera_index}.")
+        return None
+
+    print(f"Camera initialized at index {camera_index}.")
+    return cap
 
 def toggle_recording(is_recording, frame):
     global out
@@ -88,39 +94,36 @@ if __name__ == "__main__":
     is_recording = False
     out = None
 
-    while True:
+    while cap and cap.isOpened():
+        # Handle camera functionality separately
+        ret, frame = cap.read()
+        if not ret:
+            print("Error: Could not read frame.")
+            break
+
+        # Display the resulting frame
+        cv2.imshow('Camo Camera', frame)
+
+        # If recording, save frames
+        if is_recording and out is not None:
+            out.write(frame)
+
         # Always capture and send joystick inputs
         if joystick:
             inputs = capture_input(joystick)
-            # print(inputs)
             send_data_over_wifi(inputs, arduino_ip, arduino_port)
 
-            # Button 0: 'X' button to toggle recording
-            if inputs['button_6'] == 1 and cap:  # Check if 'X' button is pressed and camera is available
+            # Button 6: 'X' button to toggle recording
+            if inputs['button_6'] == 1 and cap:
                 is_recording = toggle_recording(is_recording, frame)
 
-            # Button 1: 'Circle' button to take a screenshot
-            if inputs['button_4'] == 1 and cap:  # Check if 'Circle' button is pressed and camera is available
+            # Button 4: 'Circle' button to take a screenshot
+            if inputs['button_4'] == 1 and cap:
                 take_screenshot(frame)
 
-        # Handle camera functionality separately
-        if cap:
-            # Capture frame-by-frame
-            ret, frame = cap.read()
-            if not ret:
-                print("Error: Could not read frame.")
-                break
-
-            # Display the resulting frame
-            # cv2.imshow('Camo Camera', frame)
-
-            # If recording, save frames
-            if is_recording and out is not None:
-                out.write(frame)
-
-            # Break the loop if 'q' is pressed
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        # Break the loop if 'q' is pressed
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
         time.sleep(0.1)
 
@@ -130,4 +133,3 @@ if __name__ == "__main__":
     if out:
         out.release()
     cv2.destroyAllWindows()
-

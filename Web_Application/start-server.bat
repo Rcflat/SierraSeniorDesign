@@ -1,5 +1,10 @@
 @echo off
 
+:: Kill all processes using port 3000
+echo Killing any process using port 3000...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3000') do taskkill /PID %%a /F >nul 2>&1
+echo Process killed.
+
 :: Navigate to Robot_Controls folder and run Python script
 cd Robot_Controls
 start /B python send_from_device.py
