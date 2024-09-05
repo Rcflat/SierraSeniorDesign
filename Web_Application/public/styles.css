@@ -24,6 +24,17 @@ body {
     margin-top: 0;
 }
 
+.stats-debug-panel {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    width: 200px; /* Adjust width as needed */
+    background-color: #f1f1f1;
+    padding: 20px;
+    border: 1px solid #ccc;
+    z-index: 1001; /* Ensure it's above other elements */
+}
+
 #log {
     margin-top: 10px;
     border-top: 1px solid #ccc;
@@ -70,4 +81,33 @@ ul ul {
 #video-feed {
     width: 100%;
     height: 100%;
+}
+
+/* Toggleable Window for the Gamepad Viewer */
+#controller-overlay {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    width: 1000px; /* Adjust the width as needed */
+    height: 800px; /* Adjust the height as needed */
+    border: none; /* Remove iframe border */
+    z-index: 1000; /* Ensure it's on top */
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Hidden state for the controller */
+.hidden {
+    display: none;
+}
+
+/* Style for the toggle button */
+#toggle-button {
+    width: 100%; /* Full width within the panel */
+    padding: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
 }

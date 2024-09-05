@@ -6,7 +6,7 @@ if %errorlevel% == 0 (
     echo Camo client is already running.
 ) else (
     echo Starting Camo client...
-    start /MIN "Camo Studio" "%~dp0Camo\CamoStudio.exe"
+    start /MIN "Camo Studio" "%~dp0Camo Studo/CamoStudio.exe"
     set "CAMO_PID=%!"
     
     :: Wait for a few seconds to ensure the client has started

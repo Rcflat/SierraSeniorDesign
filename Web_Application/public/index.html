@@ -20,20 +20,39 @@
             </video>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var video = document.getElementById('video-feed');
 
-            // Request access to the webcam
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function(stream) {
-                    video.srcObject = stream;
-                    video.play();
-                })
-                .catch(function(error) {
-                    console.error("Error accessing webcam: ", error);
-                });
-        });
+    <!-- Stats/Debug Panel -->
+    <div class="stats-debug-panel">
+        <h2>Stats/Debug</h2>
+        <!-- Toggle Button for the Controller Overlay -->
+        <button id="toggle-button" onclick="toggleController()">Show Controller</button>
+    </div>
+
+    <!-- Embed Gamepad Viewer for the controller overlay -->
+    <div id="controller-overlay" class="hidden">
+        <iframe 
+            src="https://gamepadviewer.com/?p=1&s=5&editcss=https%3A%2F%2Fjustehcupcake.github.io%2FPS5_Display_Pics%2FPS5_Classic.css" 
+            width="1000" 
+            height="800" 
+            style="border:none;"
+            allowfullscreen>
+        </iframe>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function toggleController() {
+            const overlay = document.getElementById('controller-overlay');
+            const button = document.getElementById('toggle-button');
+            
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                button.textContent = 'Hide Controller';
+            } else {
+                overlay.classList.add('hidden');
+                button.textContent = 'Show Controller';
+            }
+        }
     </script>
 </body>
 </html>
