@@ -1,23 +1,29 @@
 @echo off
 
+:: Navigate to Robot_Controls folder and run Python script
+cd Robot_Controls
+start /B python send_from_device.py
+set "PYTHON_PID=%!"
+
 :: Check if Camo client is already running
 tasklist /FI "IMAGENAME eq CamoStudio.exe" | find /I "CamoStudio.exe" >nul
 if %errorlevel% == 0 (
     echo Camo client is already running.
 ) else (
     echo Starting Camo client...
-    start /MIN "Camo Studio" "%~dp0Camo Studo/CamoStudio.exe"
+    start /MIN "Camo Studio" "%~dp0Camo Studio/CamoStudio.exe"
     set "CAMO_PID=%!"
-    
+
     :: Wait for a few seconds to ensure the client has started
     timeout /t 5 /nobreak >nul
 )
 
+:: Connect to Android device and wake up
 cd /d "%~dp0platform-tools"
 adb connect 192.168.1.100:5555
 adb shell input keyevent KEYCODE_WAKEUP
 
-:: Start the Camo app on your Android device
+:: Start the Camo app on the Android device
 adb shell monkey -p com.reincubate.camo 1
 
 :: Start the Node.js server in the background and capture the process ID (PID)
@@ -76,6 +82,9 @@ taskkill /PID %NODE_PID% /F >nul 2>&1
 
 :: Terminate the Camo client process if it's still running
 taskkill /PID %CAMO_PID% /F >nul 2>&1
+
+:: Terminate the Python process if it's still running
+taskkill /PID %PYTHON_PID% /F >nul 2>&1
 
 cd "platform-tools"
 adb disconnect 192.168.1.100:5555

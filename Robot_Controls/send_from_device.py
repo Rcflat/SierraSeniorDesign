@@ -32,13 +32,29 @@ def send_data_over_wifi(data, arduino_ip, arduino_port):
     sock.sendto(message, (arduino_ip, arduino_port))
     sock.close()
 
+def list_available_cameras():
+    """Lists all available camera indices."""
+    available_cameras = []
+    for i in range(10):  # Check the first 10 indices
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            available_cameras.append(i)
+            cap.release()
+    return available_cameras
+
 def initialize_camera():
-    # Open the virtual webcam (Camo should be running)
-    cap = cv2.VideoCapture(0)  # Replace '0' with the correct index if multiple webcams are available
+    # Try to open the default camera (index 0)
+    cap = cv2.VideoCapture(0)  # Replace '0' with the desired camera index if needed
     if not cap.isOpened():
-        print("Error: Could not open camera.")
+        available_cameras = list_available_cameras()
+        if available_cameras:
+            print(f"Error: Could not open camera. Available cameras: {available_cameras}")
+        else:
+            print("Error: No available cameras found.")
         return None
+    print(f"Cap Being Utilized: {cap}")
     return cap
+
 
 def toggle_recording(is_recording, frame):
     global out
@@ -76,15 +92,15 @@ if __name__ == "__main__":
         # Always capture and send joystick inputs
         if joystick:
             inputs = capture_input(joystick)
-            print(inputs)
+            # print(inputs)
             send_data_over_wifi(inputs, arduino_ip, arduino_port)
 
             # Button 0: 'X' button to toggle recording
-            if inputs['buttons'][0] == 1 and cap:  # Check if 'X' button is pressed and camera is available
+            if inputs['button_6'] == 1 and cap:  # Check if 'X' button is pressed and camera is available
                 is_recording = toggle_recording(is_recording, frame)
 
             # Button 1: 'Circle' button to take a screenshot
-            if inputs['buttons'][1] == 1 and cap:  # Check if 'Circle' button is pressed and camera is available
+            if inputs['button_4'] == 1 and cap:  # Check if 'Circle' button is pressed and camera is available
                 take_screenshot(frame)
 
         # Handle camera functionality separately

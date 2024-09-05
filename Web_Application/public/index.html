@@ -14,8 +14,8 @@
             <div id="log"></div>
         </div>
         <div class="video-widget">
-            <!-- Video Widget for Iriun Webcam -->
-            <video id="video-feed" controls autoplay muted>
+            <!-- Video Widget for Camo Camera -->
+            <video id="video-feed" autoplay muted playsinline>
                 Your browser does not support the video tag.
             </video>
         </div>
@@ -39,20 +39,7 @@
         </iframe>
     </div>
 
+    <!-- Include the external JavaScript file -->
     <script src="script.js"></script>
-    <script>
-        function toggleController() {
-            const overlay = document.getElementById('controller-overlay');
-            const button = document.getElementById('toggle-button');
-            
-            if (overlay.classList.contains('hidden')) {
-                overlay.classList.remove('hidden');
-                button.textContent = 'Hide Controller';
-            } else {
-                overlay.classList.add('hidden');
-                button.textContent = 'Show Controller';
-            }
-        }
-    </script>
 </body>
 </html>

@@ -44,6 +44,35 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    async function startCamoFeed() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: 'Camo Camera' } // Replace with the actual label for your Camo camera
+            });
+            const videoElement = document.getElementById('video-feed');
+            videoElement.srcObject = stream;
+        } catch (error) {
+            console.error("Error accessing Camo camera:", error);
+            logPanel.innerHTML += `<div>Error accessing Camo camera: ${error.message}</div>`;
+        }
+    }
+
+    // Initialize all components
     fetchFileSystem();
+    startCamoFeed();
 });
+
+function toggleController() {
+    const overlay = document.getElementById('controller-overlay');
+    const button = document.getElementById('toggle-button');
+
+    if (overlay.classList.contains('hidden')) {
+        overlay.classList.remove('hidden');
+        button.textContent = 'Hide Controller';
+    } else {
+        overlay.classList.add('hidden');
+        button.textContent = 'Show Controller';
+    }
+}
+
 
