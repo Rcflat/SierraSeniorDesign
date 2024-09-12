@@ -28,15 +28,13 @@
         <button id="toggle-button" onclick="toggleController()">Show Controller</button>
     </div>
 
-    <!-- Embed Gamepad Viewer for the controller overlay -->
+    <!-- Local Gamepad Viewer Overlay -->
     <div id="controller-overlay" class="hidden">
-        <iframe 
-            src="https://gamepadviewer.com/?p=1&s=5&editcss=https%3A%2F%2Fjustehcupcake.github.io%2FPS5_Display_Pics%2FPS5_Classic.css" 
-            width="1000" 
-            height="800" 
-            style="border:none;"
-            allowfullscreen>
-        </iframe>
+        <h2>Controller Input Viewer</h2>
+        <div id="gamepad-status">Waiting for gamepad input...</div>
+        <div id="gamepad-display">
+            <!-- Gamepad button states will be displayed here -->
+        </div>
     </div>
 
     <!-- Include the external JavaScript file -->

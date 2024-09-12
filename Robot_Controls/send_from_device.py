@@ -113,11 +113,11 @@ if __name__ == "__main__":
             inputs = capture_input(joystick)
             send_data_over_wifi(inputs, arduino_ip, arduino_port)
 
-            # Button 6: 'X' button to toggle recording
+            # Button 6: 'Menu' button to toggle recording
             if inputs['button_6'] == 1 and cap:
                 is_recording = toggle_recording(is_recording, frame)
 
-            # Button 4: 'Circle' button to take a screenshot
+            # Button 4: 'Select' button to take a screenshot
             if inputs['button_4'] == 1 and cap:
                 take_screenshot(frame)
 
