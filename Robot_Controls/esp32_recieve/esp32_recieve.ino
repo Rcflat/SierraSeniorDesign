@@ -1,7 +1,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
-#include <Servo.h>
+#include <ESP32Servo.h>  // Include the ESP32Servo library
 
 // Axis 0: Left Analog Stick (-1 = LEFT, 1 = RIGHT)
 // Axis 1: Left Analog Stick (-1 = UP, 1 = DOWN)
@@ -25,6 +25,8 @@
 // Button 14: DPAD_RIGHT (0 = Released, 1 = Pressed)
 // Button 15: Center Button, Big Panel (0 = Released, 1 = Pressed)
 
+// PINS for Thermister 25, 26, 27
+
 // WiFi credentials
 const char* ssid = "NETGEAR32";
 const char* password = "breezybreeze113";
@@ -38,18 +40,16 @@ IPAddress dns(8, 8, 8, 8);
 WiFiUDP udp;
 const unsigned int localPort = 8888;
 
+// Create Servo objects
 Servo myServoS1;
 Servo myServoS2;
 
 void pinMapping() {
   const int outputPinS1 = 2;  // PWM output pin for S1
   const int outputPinS2 = 3;  // PWM output pin for S2
-  const int outputPinS3 = 4;  // Servo output pin for S3
-  const int outputPinS4 = 5;  // Servo output pin for S4
-  const int LEDoutputPin = 9; // Output pin for LED
 
-  myServoS1.attach(outputPinS1); // Attaching servo to the pin
-  myServoS2.attach(outputPinS2); // Attaching servo to the pin
+  myServoS1.attach(outputPinS1); // Attach servo to the pin
+  myServoS2.attach(outputPinS2); // Attach servo to the pin
 }
 
 void updateValues(JsonDocument& doc) {
@@ -73,11 +73,12 @@ void updateValues(JsonDocument& doc) {
 
   prev_dpad = dpad_value;
 
-  int pulseWidthS1 = map(sensorValueS1, -512, 512, Servo_Ranges[speed_setting][0], Servo_Ranges[speed_setting][1]);
-  int pulseWidthS2 = map(sensorValueS2, -512, 512, Servo_Ranges[speed_setting][0], Servo_Ranges[speed_setting][1]);
+  // Map sensor values to servo ranges (in degrees)
+  int angleS1 = map(sensorValueS1, -512, 512, 0, 180);
+  int angleS2 = map(sensorValueS2, -512, 512, 0, 180);
   
-  myServoS1.writeMicroseconds(pulseWidthS1);
-  myServoS2.writeMicroseconds(pulseWidthS2);
+  myServoS1.write(angleS1); // Set the servo to the specified angle
+  myServoS2.write(angleS2); // Set the servo to the specified angle
 
   int LEDValue = doc["axisRY"];
   int LED_Adjustment = map(LEDValue, -512, 512, 0, 255);
@@ -85,10 +86,10 @@ void updateValues(JsonDocument& doc) {
 
   Serial.print("Speed Setting: ");
   Serial.print(speed_setting);
-  Serial.print(" Servo Pulse Width (1): ");
-  Serial.print(pulseWidthS1);
-  Serial.print(" Servo Pulse Width (2): ");
-  Serial.println(pulseWidthS2);
+  Serial.print(" Servo Angle (1): ");
+  Serial.print(angleS1);
+  Serial.print(" Servo Angle (2): ");
+  Serial.println(angleS2);
 }
 
 void setup() {
@@ -131,4 +132,3 @@ void loop() {
 
   // If no packet, robot defaults to controller rest values
 }
-

@@ -1,30 +1,30 @@
 
-# Axis 0: Left Analog Stick (-1 = LEFT, 1 = RIGHT)
-# Axis 1: Left Analog Stick (-1 = UP, 1 = DOWN)
-# Axis 2: Right Analog Stick (-1 = UP, 1 = DOWN)
-# Axis 3: Right Analog Stick (-1 = UP, 1 = DOWN)
-# Axis 4: Back Left Trigger (-1 = Released, 1 = Pressed)
-# Axis 5: Back Right Trigger (-1 = Released, 1 = Pressed)
-
-# Button 0: X Button (0 = Released, 1 = Pressed)
-# Button 1: Circle Button (0 = Released, 1 = Pressed)
-# Button 2: Square Button (0 = Released, 1 = Pressed)
-# Button 3: Triangle Button (0 = Released, 1 = Pressed)
-# Button 4: Select Button (0 = Released, 1 = Pressed)
-# Button 5: Playstation Button (0 = Released, 1 = Pressed)
-# Button 6: Menu Button (0 = Released, 1 = Pressed)
-# Button 9: Back Left Button (0 = Released, 1 = Pressed)
-# Button 10: Back Right Button (0 = Released, 1 = Pressed)
-# Button 11: DPAD_UP (0 = Released, 1 = Pressed)
-# Button 12: DPAD_DOWN (0 = Released, 1 = Pressed)
-# Button 13: DPAD_LEFT (0 = Released, 1 = Pressed)
-# Button 14: DPAD_RIGHT (0 = Released, 1 = Pressed)
-# Button 15: Center Button, Big Panel (0 = Released, 1 = Pressed)
+# - Axis 0: Left Analog Stick (-1 = LEFT, 1 = RIGHT)
+# - Axis 1: Left Analog Stick (-1 = UP, 1 = DOWN)
+# - Axis 2: Right Analog Stick (-1 = UP, 1 = DOWN)
+# - Axis 3: Right Analog Stick (-1 = UP, 1 = DOWN)
+# - Axis 4: Back Left Trigger (-1 = Released, 1 = Pressed)
+# - Axis 5: Back Right Trigger (-1 = Released, 1 = Pressed)
+# - Button 0: X Button (0 = Released, 1 = Pressed)
+# - Button 1: Circle Button (0 = Released, 1 = Pressed)
+# - Button 2: Square Button (0 = Released, 1 = Pressed)
+# - Button 3: Triangle Button (0 = Released, 1 = Pressed)
+# - Button 4: Select Button (0 = Released, 1 = Pressed)
+# - Button 5: Playstation Button (0 = Released, 1 = Pressed)
+# - Button 6: Menu Button (0 = Released, 1 = Pressed)
+# - Button 9: Back Left Button (0 = Released, 1 = Pressed)
+# - Button 10: Back Right Button (0 = Released, 1 = Pressed)
+# - Button 11: DPAD_UP (0 = Released, 1 = Pressed)
+# - Button 12: DPAD_DOWN (0 = Released, 1 = Pressed)
+# - Button 13: DPAD_LEFT (0 = Released, 1 = Pressed)
+# - Button 14: DPAD_RIGHT (0 = Released, 1 = Pressed)
+# - Button 15: Center Button, Big Panel (0 = Released, 1 = Pressed)
 
 import socket
 import json
 import time
 import cv2
+import threading
 
 def send_data_over_wifi(data, arduino_ip, arduino_port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -32,35 +32,9 @@ def send_data_over_wifi(data, arduino_ip, arduino_port):
     sock.sendto(message, (arduino_ip, arduino_port))
     sock.close()
 
-def list_available_cameras():
-    """Lists all available camera indices."""
-    available_cameras = []
-    for i in range(10):  # Check the first 10 indices
-        cap = cv2.VideoCapture(i)
-        if cap.isOpened():
-            available_cameras.append(i)
-            cap.release()
-    return available_cameras
-
-def initialize_camera():
-    # Check for available cameras
-    available_cameras = list_available_cameras()
-    if not available_cameras:
-        print("Error: No available cameras found.")
-        return None
-
-    print(f"Available cameras: {available_cameras}")
-
-    # Try to open the first available camera
-    camera_index = available_cameras[2]
-    cap = cv2.VideoCapture(camera_index)
-
-    if not cap.isOpened():
-        print(f"Error: Could not open camera at index {camera_index}.")
-        return None
-
-    print(f"Camera initialized at index {camera_index}.")
-    return cap
+def take_screenshot(frame):
+    cv2.imwrite('screenshot.png', frame)
+    print("Screenshot saved!")
 
 def toggle_recording(is_recording, frame):
     global out
@@ -76,50 +50,96 @@ def toggle_recording(is_recording, frame):
         print("Recording stopped.")
         return False
 
-def take_screenshot(frame):
-    cv2.imwrite('screenshot.png', frame)
-    print("Screenshot saved!")
+def list_available_cameras():
+    """Lists all available camera indices."""
+    available_cameras = []
+    for i in range(10):  # Check the first 10 indices
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            available_cameras.append(i)
+            cap.release()
+    return available_cameras
 
+def initialize_camera():
+    # Check for available cameras
+    available_cameras = list_available_cameras()
+    if not available_cameras:
+        print("Warning: No available cameras found.")
+        return None
+
+    print(f"Available cameras: {available_cameras}")
+
+    # Try to open the first available camera
+    camera_index = available_cameras[0]
+    cap = cv2.VideoCapture(camera_index)
+
+    if not cap.isOpened():
+        print(f"Warning: Could not open camera at index {camera_index}.")
+        return None
+
+    print(f"Camera initialized at index {camera_index}.")
+    return cap
+
+def receive_data(udp_port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.bind(("", udp_port))  # Bind to any available IP on the given port
+    print(f"Listening for data on port {udp_port}...")
+    while True:
+        data, addr = sock.recvfrom(1024)  # Buffer size of 1024 bytes
+        json_data = json.loads(data.decode('utf-8'))
+        print(f"Received data: {json_data}")
+
+# Main program
 if __name__ == "__main__":
     from capture_input import capture_input
     from connect_controller import connect_controller
 
     arduino_ip = "192.168.1.50"  # Replace with your Arduino's IP address
     arduino_port = 8888  # Replace with your Arduino's port number
+    udp_port = 8888  # Port for receiving data from ESP32
 
-    # Initialize joystick and camera
+    # Initialize joystick and optional camera
     joystick = connect_controller()
-    cap = initialize_camera()
-
+    cap = initialize_camera()  # Camera initialization is optional
     is_recording = False
     out = None
 
-    while cap and cap.isOpened():
-        # Handle camera functionality separately
-        ret, frame = cap.read()
-        if not ret:
-            print("Error: Could not read frame.")
-            break
+    # Start receiving data in a separate thread
+    receive_thread = threading.Thread(target=receive_data, args=(udp_port,), daemon=True)
+    receive_thread.start()
 
-        # Display the resulting frame
-        cv2.imshow('Camo Camera', frame)
+    while True:
+        # Handle camera functionality only if a camera is available
+        if cap and cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                print("Warning: Could not read frame, retrying...")
+                time.sleep(1)
+                continue
 
-        # If recording, save frames
-        if is_recording and out is not None:
-            out.write(frame)
+            # Display the resulting frame
+            cv2.imshow('Camo Camera', frame)
 
-        # Always capture and send joystick inputs
+            # If recording, save frames
+            if is_recording and out is not None:
+                out.write(frame)
+
+            # Check for specific button inputs to control camera functions
+            if joystick:
+                inputs = capture_input(joystick)
+                
+                # Button 6: 'Menu' button to toggle recording
+                if inputs['button_6'] == 1:
+                    is_recording = toggle_recording(is_recording, frame)
+
+                # Button 4: 'Select' button to take a screenshot
+                if inputs['button_4'] == 1:
+                    take_screenshot(frame)
+
+        # Capture and send joystick inputs to Arduino, even without a camera
         if joystick:
             inputs = capture_input(joystick)
             send_data_over_wifi(inputs, arduino_ip, arduino_port)
-
-            # Button 6: 'Menu' button to toggle recording
-            if inputs['button_6'] == 1 and cap:
-                is_recording = toggle_recording(is_recording, frame)
-
-            # Button 4: 'Select' button to take a screenshot
-            if inputs['button_4'] == 1 and cap:
-                take_screenshot(frame)
 
         # Break the loop if 'q' is pressed
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -133,3 +153,4 @@ if __name__ == "__main__":
     if out:
         out.release()
     cv2.destroyAllWindows()
+
