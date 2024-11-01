@@ -1,134 +1,96 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
-#include <ESP32Servo.h>  // Include the ESP32Servo library
 
-// Axis 0: Left Analog Stick (-1 = LEFT, 1 = RIGHT)
-// Axis 1: Left Analog Stick (-1 = UP, 1 = DOWN)
-// Axis 2: Right Analog Stick (-1 = UP, 1 = DOWN)
-// Axis 3: Right Analog Stick (-1 = UP, 1 = DOWN)
-// Axis 4: Back Left Trigger (-1 = Released, 1 = Pressed)
-// Axis 5: Back Right Trigger (-1 = Released, 1 = Pressed)
-
-// Button 0: X Button (0 = Released, 1 = Pressed)
-// Button 1: Circle Button (0 = Released, 1 = Pressed)
-// Button 2: Square Button (0 = Released, 1 = Pressed)
-// Button 3: Triangle Button (0 = Released, 1 = Pressed)
-// Button 4: Select Button (0 = Released, 1 = Pressed)
-// Button 5: Playstation Button (0 = Released, 1 = Pressed)
-// Button 6: Menu Button (0 = Released, 1 = Pressed)
-// Button 9: Back Left Button (0 = Released, 1 = Pressed)
-// Button 10: Back Right Button (0 = Released, 1 = Pressed)
-// Button 11: DPAD_UP (0 = Released, 1 = Pressed)
-// Button 12: DPAD_DOWN (0 = Released, 1 = Pressed)
-// Button 13: DPAD_LEFT (0 = Released, 1 = Pressed)
-// Button 14: DPAD_RIGHT (0 = Released, 1 = Pressed)
-// Button 15: Center Button, Big Panel (0 = Released, 1 = Pressed)
-
-// PINS for Thermister 25, 26, 27
-
-// WiFi credentials
-const char* ssid = "NETGEAR32";
-const char* password = "breezybreeze113";
-
-// Static IP address configuration
-IPAddress ip(192, 168, 1, 50);
-IPAddress gateway(192, 168, 1, 1);
-IPAddress subnet(255, 255, 255, 0);
-IPAddress dns(8, 8, 8, 8);
-
+// WiFi and UDP configuration
+const char *ssid = "TP-Link_59D8";   // Replace with your network's SSID
+const char *password = "96332108";   // Replace with your network's password
+const IPAddress localIP(192, 168, 1, 122); // ESP32's static IP
+const IPAddress gateway(192, 168, 0, 1);
+const IPAddress subnet(255, 255, 255, 0);
 WiFiUDP udp;
-const unsigned int localPort = 8888;
+unsigned int udpPort = 8888;         // Listening port for UDP
+char incomingPacket[255];            // Buffer for incoming packets
 
-// Create Servo objects
-Servo myServoS1;
-Servo myServoS2;
-
-void pinMapping() {
-  const int outputPinS1 = 2;  // PWM output pin for S1
-  const int outputPinS2 = 3;  // PWM output pin for S2
-
-  myServoS1.attach(outputPinS1); // Attach servo to the pin
-  myServoS2.attach(outputPinS2); // Attach servo to the pin
-}
-
-void updateValues(JsonDocument& doc) {
-  int sensorValueS1 = doc["axisX"];  
-  int sensorValueS2 = doc["axisY"];  
-
-  int Servo_Ranges[4][2] = {{1450, 1500}, {1400, 1550}, {1200, 1750}, {1000, 1950}};
-  int dpad_value = doc["dpad"];
-  static int prev_dpad = 0;
-  static int speed_setting = 0;
-
-  if (dpad_value == 1 && prev_dpad != dpad_value) {
-    if (speed_setting < 3) {
-      speed_setting++;
-    }
-  } else if (dpad_value == 2 && prev_dpad != dpad_value) {
-    if (speed_setting > 0) {
-      speed_setting--;
-    }
-  }
-
-  prev_dpad = dpad_value;
-
-  // Map sensor values to servo ranges (in degrees)
-  int angleS1 = map(sensorValueS1, -512, 512, 0, 180);
-  int angleS2 = map(sensorValueS2, -512, 512, 0, 180);
-  
-  myServoS1.write(angleS1); // Set the servo to the specified angle
-  myServoS2.write(angleS2); // Set the servo to the specified angle
-
-  int LEDValue = doc["axisRY"];
-  int LED_Adjustment = map(LEDValue, -512, 512, 0, 255);
-  analogWrite(9, LED_Adjustment); 
-
-  Serial.print("Speed Setting: ");
-  Serial.print(speed_setting);
-  Serial.print(" Servo Angle (1): ");
-  Serial.print(angleS1);
-  Serial.print(" Servo Angle (2): ");
-  Serial.println(angleS2);
+// Function to send acknowledgment back to the sender
+void sendAcknowledgment(IPAddress senderIP, unsigned int senderPort) {
+  const char *ackMessage = "ACK";
+  udp.beginPacket(senderIP, senderPort);
+  udp.write((const uint8_t*)ackMessage, strlen(ackMessage));
+  udp.endPacket();
+  Serial.println("Acknowledgment sent.");
 }
 
 void setup() {
-  Serial.begin(115200);
-  WiFi.config(ip, gateway, subnet, dns);
-  WiFi.begin(ssid, password);
+  Serial.begin(115200); // Start the Serial communication
 
+  // Connect to WiFi
+  WiFi.config(localIP, gateway, subnet);
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi...");
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
-    Serial.println("Connecting to WiFi...");
+    Serial.print(".");
   }
+  Serial.println("\nConnected to WiFi!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
 
-  Serial.println("Connected to WiFi");
-  udp.begin(localPort);
-
-  pinMapping();
+  // Start UDP
+  udp.begin(udpPort);
+  Serial.print("Listening on UDP port ");
+  Serial.println(udpPort);
 }
 
 void loop() {
-  char incomingPacket[832];
   int packetSize = udp.parsePacket();
-
   if (packetSize) {
-    int len = udp.read(incomingPacket, 832);
+    // Packet received
+    Serial.print("Received packet of size ");
+    Serial.println(packetSize);
+    Serial.print("From IP: ");
+    Serial.print(udp.remoteIP());
+    Serial.print(", Port: ");
+    Serial.println(udp.remotePort());
+
+    // Read packet into buffer
+    int len = udp.read(incomingPacket, 255);
     if (len > 0) {
-      incomingPacket[len] = 0;
+      incomingPacket[len] = '\0'; // Null-terminate the packet
+      Serial.print("Packet content: ");
+      Serial.println(incomingPacket);
+
+      // Parse JSON data
+      StaticJsonDocument<256> doc;
+      DeserializationError error = deserializeJson(doc, incomingPacket);
+
+      if (error) {
+        Serial.print("Failed to parse packet: ");
+        Serial.println(error.c_str());
+        return;
+      }
+
+      // Example: Access axis and button data here
+      float axis0 = doc["axis_0"];
+      int button0 = doc["button_0"];
+
+      Serial.println("Packet parsed successfully:");
+      Serial.print("Axis 0: ");
+      Serial.println(axis0);
+      Serial.print("Button 0: ");
+      Serial.println(button0);
+
+      // Send acknowledgment to sender
+      sendAcknowledgment(udp.remoteIP(), udp.remotePort());
+    } else {
+      Serial.println("Failed to read incoming packet.");
     }
-
-    StaticJsonDocument<256> doc;
-    DeserializationError error = deserializeJson(doc, incomingPacket);
-
-    if (error) {
-      Serial.print("Failed to parse JSON: ");
-      Serial.println(error.c_str());
-      return;
-    }
-
-    updateValues(doc);
+  } else {
+    // No packet available
+    delay(10000);
+    Serial.println("Nothing Happening.");
   }
-
-  // If no packet, robot defaults to controller rest values
 }
+
+
+
