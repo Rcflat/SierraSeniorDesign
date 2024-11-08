@@ -3,6 +3,9 @@ Arduino Library for SyRen/Sabertooth Packet Serial
 Copyright (c) 2012-2013 Dimension Engineering LLC
 http://www.dimensionengineering.com/arduino
 
+Library ported to work with ESP32.
+Adaptation by Dominick Lee.
+
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
 copyright notice and this permission notice appear in all copies.
@@ -21,7 +24,7 @@ USE OR PERFORMANCE OF THIS SOFTWARE.
 Sabertooth::Sabertooth(byte address)
   : _address(address), _port(SabertoothTXPinSerial)
 {
-  
+
 }
 
 Sabertooth::Sabertooth(byte address, SabertoothStream& port)
@@ -88,12 +91,12 @@ void Sabertooth::stop() const
 
 void Sabertooth::setMinVoltage(byte value) const
 {
-  command(2, (byte)min(value, 120));
+  command(2, (byte)min(static_cast<int>(value), 120));
 }
 
 void Sabertooth::setMaxVoltage(byte value) const
 {
-  command(3, (byte)min(value, 127));
+  command(3, (byte)min(static_cast<int>(value), 127));
 }
 
 void Sabertooth::setBaudRate(long baudRate) const
@@ -117,18 +120,12 @@ void Sabertooth::setBaudRate(long baudRate) const
   port().flush();
 #endif
   
-  // (1) flush() does not seem to wait until transmission is complete.
-  //     As a result, a Serial.end() directly after this appears to
-  //     not always transmit completely. So, we manually add a delay.
-  // (2) Sabertooth takes about 200 ms after setting the baud rate to
-  //     respond to commands again (it restarts).
-  // So, this 500 ms delay should deal with this.
   delay(500);
 }
 
 void Sabertooth::setDeadband(byte value) const
 {
-  command(17, (byte)min(value, 127));
+  command(17, (byte)min(static_cast<int>(value), 127));
 }
 
 void Sabertooth::setRamping(byte value) const

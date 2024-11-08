@@ -3,6 +3,9 @@ Arduino Library for SyRen/Sabertooth Packet Serial
 Copyright (c) 2012-2013 Dimension Engineering LLC
 http://www.dimensionengineering.com/arduino
 
+Library ported to work with ESP32.
+Adaptation by Dominick Lee.
+
 Permission to use, copy, modify, and/or distribute this software for any
 purpose with or without fee is hereby granted, provided that the above
 copyright notice and this permission notice appear in all copies.
