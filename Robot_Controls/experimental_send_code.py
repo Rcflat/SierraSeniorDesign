@@ -3,6 +3,7 @@ import time
 import cv2
 from connect_controller import connect_controller
 from capture_input import capture_input
+from pygrabber.dshow_graph import FilterGraph
 
 # - Axis 0: Left Analog Stick (-1 = LEFT, 1 = RIGHT)
 # - Axis 1: Left Analog Stick (-1 = UP, 1 = DOWN)
@@ -41,14 +42,21 @@ def toggle_recording(is_recording, frame):
         print("Recording stopped.")
         return False
     
+# def list_available_cameras():
+#     available_cameras = []
+#     for i in range(10):
+#         cap = cv2.VideoCapture(i)
+#         if cap.isOpened():
+#             available_cameras.append(i)
+#             cap.release()
+#     return available_cameras
+
 def list_available_cameras():
-    available_cameras = []
-    for i in range(10):
-        cap = cv2.VideoCapture(i)
-        if cap.isOpened():
-            available_cameras.append(i)
-            cap.release()
-    return available_cameras
+    graph = FilterGraph()
+    devices = graph.get_input_devices()
+    cameras = {index: name for index, name in enumerate(devices)}
+    return cameras
+
     
 def initialize_camera():
     available_cameras = list_available_cameras()
@@ -85,9 +93,9 @@ try:
             # Send the inputs to the ESP32
             message = str(inputs)  # Convert inputs to string
             packet_size = len(message.encode())  # Get the size of the packet in bytes
-            print(f"Packet size: {packet_size} bytes")
+            # print(f"Packet size: {packet_size} bytes")
             sock.sendto(message.encode(), (esp32_ip, esp32_port))
-            print(f"Sent: {message}")
+            # print(f"Sent: {message}")
 
             # Button 6: 'Menu' button to toggle recording
             if inputs['button_6'] == 1 and cap and cap.isOpened():
@@ -114,7 +122,7 @@ try:
         sock.settimeout(0.1)  # 500 ms timeout for response
         try:
             response, addr = sock.recvfrom(1024)
-            print(f"Received from ESP32: {response.decode()}")
+            # print(f"Received from ESP32: {response.decode()}")
         except socket.timeout:
             print("No response from ESP32.")
 
