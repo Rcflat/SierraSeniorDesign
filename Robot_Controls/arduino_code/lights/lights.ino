@@ -1,38 +1,42 @@
 #include <FastLED.h>
 
-#define PIN 21                // Pin where the LED strip is connected
-#define NUM_LEDS 60           // Number of LEDs in the strip
-#define LED_TYPE WS2812       // Use WS2812 chipset as WS2814 is not natively supported in FastLED
-#define COLOR_ORDER GRB       // Color order for WS2814 (Green, Red, Blue)
+// Define LED strip parameters
+#define LED_PIN     21  // Data pin for the LED strip
+#define NUM_LEDS    30  // Number of LEDs on your strip
+#define BRIGHTNESS  128
+#define LED_TYPE    WS2812B
+#define COLOR_ORDER RGB
 
-CRGB leds[NUM_LEDS];         // Create an array to hold the LED data
+CRGB leds[NUM_LEDS];
+
+int brightness = 128; // Starting brightness (range 0 - 255)
 
 void setup() {
-  FastLED.addLeds<LED_TYPE, PIN, COLOR_ORDER>(leds, NUM_LEDS); // Initialize the LEDs
-  FastLED.setBrightness(128);  // Set the initial brightness to 128 (50%)
+    // Initialize the LED strip
+    FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
+    FastLED.setBrightness(brightness);
+
+    // Set up any additional pins or controllers here
+    Serial.begin(115200);
 }
 
 void loop() {
-  // Set all LEDs to white (using RGB and manually controlling white with the W channel)
-  fill_solid(leds, NUM_LEDS, CRGB(255, 255, 255)); // Full white with RGB
-  // Optionally, adjust the white channel separately if needed:
-  // leds[0] = CRGB(255, 255, 255);  // White without RGB mix
+    // Example: set all LEDs to blue
+    fill_solid(leds, NUM_LEDS, CRGB::White);
+    FastLED.show();
 
-  FastLED.show();
-  delay(1000); // Wait for 1 second
+    // Example brightness control with serial input for testing
+    if (Serial.available()) {
+        char command = Serial.read();
+        if (command == '+') {
+            brightness = min(255, brightness + 15);  // Increase brightness
+        } else if (command == '-') {
+            brightness = max(0, brightness - 15);    // Decrease brightness
+        }
+        FastLED.setBrightness(brightness);
+        FastLED.show();
+        Serial.println(brightness);
+    }
 
-  // Set all LEDs to red with some white
-  fill_solid(leds, NUM_LEDS, CRGB(255, 0, 0)); // Red
-  // Manually add white:
-  leds[0] = CRGB(255, 0, 0); // Red with white manually adjusted
-  FastLED.show();
-  delay(1000); // Wait for 1 second
-
-  // Set all LEDs to blue with white
-  fill_solid(leds, NUM_LEDS, CRGB(0, 0, 255)); // Blue
-  // Optionally, adjust the white channel manually
-  leds[0] = CRGB(0, 0, 255); // Blue with white
-  FastLED.show();
-  delay(1000); // Wait for 1 second
+    delay(100); // Adjust delay as needed
 }
-

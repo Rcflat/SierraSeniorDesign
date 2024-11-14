@@ -4,6 +4,27 @@ import cv2
 from connect_controller import connect_controller
 from capture_input import capture_input
 
+# - Axis 0: Left Analog Stick (-1 = LEFT, 1 = RIGHT)
+# - Axis 1: Left Analog Stick (-1 = UP, 1 = DOWN)
+# - Axis 2: Right Analog Stick (-1 = UP, 1 = DOWN)
+# - Axis 3: Right Analog Stick (-1 = UP, 1 = DOWN)
+# - Axis 4: Back Left Trigger (-1 = Released, 1 = Pressed)
+# - Axis 5: Back Right Trigger (-1 = Released, 1 = Pressed)
+# - Button 0: X Button (0 = Released, 1 = Pressed)
+# - Button 1: Circle Button (0 = Released, 1 = Pressed)
+# - Button 2: Square Button (0 = Released, 1 = Pressed)
+# - Button 3: Triangle Button (0 = Released, 1 = Pressed)
+# - Button 4: Select Button (0 = Released, 1 = Pressed)
+# - Button 5: Playstation Button (0 = Released, 1 = Pressed)
+# - Button 6: Menu Button (0 = Released, 1 = Pressed)
+# - Button 9: Back Left Button (0 = Released, 1 = Pressed)
+# - Button 10: Back Right Button (0 = Released, 1 = Pressed)
+# - Button 11: DPAD_UP (0 = Released, 1 = Pressed)
+# - Button 12: DPAD_DOWN (0 = Released, 1 = Pressed)
+# - Button 13: DPAD_LEFT (0 = Released, 1 = Pressed)
+# - Button 14: DPAD_RIGHT (0 = Released, 1 = Pressed)
+# - Button 15: Center Button, Big Panel (0 = Released, 1 = Pressed)
+
 def take_screenshot(frame):
     cv2.imwrite('screenshot.png', frame)
     print("Screenshot saved!")
@@ -90,15 +111,15 @@ try:
                 out.write(frame)
 
         # Listen for a response
-        sock.settimeout(0.5)  # 500 ms timeout for response
+        sock.settimeout(0.1)  # 500 ms timeout for response
         try:
             response, addr = sock.recvfrom(1024)
             print(f"Received from ESP32: {response.decode()}")
         except socket.timeout:
             print("No response from ESP32.")
 
-        # Wait 100 ms before sending the next message
-        time.sleep(0.1)
+        # # Wait 100 ms before sending the next message
+        # time.sleep(0.1)
 
 except KeyboardInterrupt:
     print("Stopped by user.")

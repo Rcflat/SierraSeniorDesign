@@ -7,7 +7,7 @@ echo Process killed.
 
 :: Navigate to Robot_Controls folder and run Python script
 cd Robot_Controls
-start /B python send_from_device.py
+start /B python experimental_send_code.py
 set "PYTHON_PID=%!"
 
 :: Check if Camo client is already running
@@ -91,7 +91,13 @@ taskkill /PID %CAMO_PID% /F >nul 2>&1
 :: Terminate the Python process if it's still running
 taskkill /PID %PYTHON_PID% /F >nul 2>&1
 
-cd "platform-tools"
+:: Navigate to the Android home screen and put the device to sleep
+adb shell input keyevent KEYCODE_HOME
+adb shell input keyevent KEYCODE_SLEEP
+
+:: Disconnect from the Android device
 adb disconnect 192.168.1.100:5555
+
 exit /b
+
 

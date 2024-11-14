@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <ArduinoJson.h>
+#include <ESP32Servo.h>  // Include the ESP32 Servo library to control servo motors
 
 // Wi-Fi configuration
 const char* ssid = "TP-Link_59D8";         
@@ -14,6 +15,17 @@ int motor1Speed = 0;
 int motor2Speed = 0;
 char motor1SpeedChar[20];
 char motor2SpeedChar[20];
+
+// Define servo objects for pan and tilt movements
+Servo panServo;
+Servo tiltServo;
+
+// Define pin numbers for the pan and tilt servos
+int panPin = 33;
+int tiltPin = 32;
+
+float pan_angle = 100;
+float tilt_angle = 120;
 
 void SendSabertoothCommand(int motor1Speed, int motor2Speed) {
 
@@ -36,6 +48,11 @@ void setup() {
 
   udp.begin(localUdpPort);
   Serial.printf("Listening on IP: %s, Port: %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+
+  panServo.attach(panPin);  // Attach pan servo to pin 33
+  tiltServo.attach(tiltPin);  // Attach tilt servo to pin 12
+
+  
 }
 
 void loop() {
@@ -59,24 +76,70 @@ void loop() {
       // Access JSON fields
       float axis_0 = jsonDoc["axis_0"];
       float axis_1 = jsonDoc["axis_1"];
+      int button_8 = jsonDoc["button_8"];
 
-      Serial.printf("axis_0: %f\n", axis_0);
-      Serial.printf("axis_1: %f\n", axis_1);
+      // Serial.printf("axis_0: %f\n", axis_0);
+      // Serial.printf("axis_1: %f\n", axis_1);
 
       // Differential drive calculations
       float left_motor = axis_0 - axis_1;   // Adjusted for Sabertooth's control range
       float right_motor = -axis_1 - axis_0;
 
-      // Map values to Sabertooth motor range (-127 to 127)
+      // Map values to Sabertooth motor range (idk to idk)
       int leftMotorValue = (int)(left_motor * 1500);
       int rightMotorValue = (int)(right_motor * 1500);
 
+      if (leftMotorValue <= 50  && leftMotorValue >= -50){
+        leftMotorValue = 0;
+      }
+
+      if (rightMotorValue <= 50 && rightMotorValue >= -50){
+        rightMotorValue = 0;
+      }
+
       // Debug print for motor values
-      Serial.printf("leftMotorValue: %d\n", leftMotorValue);
-      Serial.printf("rightMotorValue: %d\n", rightMotorValue);
+      // Serial.printf("leftMotorValue: %d\n", leftMotorValue);
+      // Serial.printf("rightMotorValue: %d\n", rightMotorValue);
 
       // Set motor speed and direction using Sabertooth
       SendSabertoothCommand(leftMotorValue, rightMotorValue);
+
+      // Set angle of pan-tilt
+      float axis_2 = jsonDoc["axis_2"];
+      float axis_3 = jsonDoc["axis_3"];
+
+      // Servo Value are 0 - 180
+      pan_angle = pan_angle + (axis_2 * 0.2);
+      tilt_angle = tilt_angle + (axis_3 * 0.2);
+
+      if (pan_angle >= 160){
+        pan_angle = 160;
+      }
+
+      if (tilt_angle >= 220){
+        tilt_angle = 220;
+      }
+
+      if (pan_angle <= 20){
+        pan_angle = 20;
+      }
+
+      if (tilt_angle <= 35){
+        tilt_angle = 35;
+      }
+
+      if (button_8 == 1){
+        pan_angle = 100;
+        tilt_angle = 120;
+      }
+
+      // Debug print for motor values
+      Serial.printf("pan-angle: %d\n", pan_angle);
+      Serial.printf("tilt-angle: %d\n", tilt_angle);
+
+      // Set both pan and tilt servos to the specified angle
+      panServo.write(pan_angle);
+      tiltServo.write(tilt_angle);
 
       // Send acknowledgment message
       const char* response = "ESP32: JSON message received";
@@ -92,5 +155,5 @@ void loop() {
   udp.write((const uint8_t*)periodicMessage, strlen(periodicMessage));
   udp.endPacket();
 
-  delay(100);  // Wait 100 ms before the next packet
+  // delay(100);  // Wait 100 ms before the next packet
 }
