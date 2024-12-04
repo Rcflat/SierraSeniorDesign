@@ -112,25 +112,25 @@ void loop() {
       pan_angle = pan_angle + (axis_2 * 0.2);
       tilt_angle = tilt_angle + (axis_3 * 0.2);
 
-      if (pan_angle >= 160){
-        pan_angle = 160;
+      if (pan_angle >= 110){
+        pan_angle = 110;
       }
 
-      if (tilt_angle >= 220){
-        tilt_angle = 220;
+      if (tilt_angle >= 120){
+        tilt_angle = 120;
       }
 
-      if (pan_angle <= 20){
-        pan_angle = 20;
+      if (pan_angle <= 0){
+        pan_angle = 0;
       }
 
-      if (tilt_angle <= 35){
-        tilt_angle = 35;
+      if (tilt_angle <= 0){
+        tilt_angle = 0;
       }
 
       if (button_8 == 1){
-        pan_angle = 100;
-        tilt_angle = 120;
+        pan_angle = 80;
+        tilt_angle = 90;
       }
 
       // Debug print for motor values
