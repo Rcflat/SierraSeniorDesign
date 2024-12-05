@@ -50,7 +50,7 @@ void setup() {
   Serial.printf("Listening on IP: %s, Port: %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
   panServo.attach(panPin);  // Attach pan servo to pin 33
-  tiltServo.attach(tiltPin);  // Attach tilt servo to pin 12
+  tiltServo.attach(tiltPin);  // Attach tilt servo to pin 32
 
   
 }
@@ -63,7 +63,7 @@ void loop() {
     if (len > 0) {
       incomingPacket[len] = '\0';
     }
-    Serial.printf("Received: %s\n", incomingPacket);
+    Serial.printf("Received: %d\n", incomingPacket);
 
     // Parse the incoming packet as JSON
     StaticJsonDocument<415> jsonDoc;
@@ -76,24 +76,38 @@ void loop() {
       // Access JSON fields
       float axis_0 = jsonDoc["axis_0"];
       float axis_1 = jsonDoc["axis_1"];
+      float button_9 = jsonDoc["button_9"];
+      float button_10 = jsonDoc["button_10"];
       int button_8 = jsonDoc["button_8"];
 
       // Serial.printf("axis_0: %f\n", axis_0);
       // Serial.printf("axis_1: %f\n", axis_1);
 
-      // Differential drive calculations
-      float left_motor = axis_0 - axis_1;   // Adjusted for Sabertooth's control range
-      float right_motor = -axis_1 - axis_0;
+
+      // Differential drive calculations (using left-stick)
+      float left_motor = -axis_0 - axis_1;   // Adjusted for Sabertooth's control range
+      float right_motor = -axis_1 + axis_0;
 
       // Map values to Sabertooth motor range (idk to idk)
       int leftMotorValue = (int)(left_motor * 1500);
       int rightMotorValue = (int)(right_motor * 1500);
 
-      if (leftMotorValue <= 50  && leftMotorValue >= -50){
+      // Rear bumper logic
+      if (button_9 == 1){
+        leftMotorValue = -3000;
+        rightMotorValue = -3000;
+      }
+
+      if (button_10 == 1){
+        leftMotorValue = 3000;
+        rightMotorValue = 3000;
+      }
+
+      if (leftMotorValue <= 200  && leftMotorValue >= -200){
         leftMotorValue = 0;
       }
 
-      if (rightMotorValue <= 50 && rightMotorValue >= -50){
+      if (rightMotorValue <= 200 && rightMotorValue >= -200){
         rightMotorValue = 0;
       }
 
@@ -116,16 +130,16 @@ void loop() {
         pan_angle = 160;
       }
 
-      if (tilt_angle >= 220){
-        tilt_angle = 220;
+      if (tilt_angle >= 130){
+        tilt_angle = 130;
       }
 
       if (pan_angle <= 20){
         pan_angle = 20;
       }
 
-      if (tilt_angle <= 35){
-        tilt_angle = 35;
+      if (tilt_angle <= 50){
+        tilt_angle = 50;
       }
 
       if (button_8 == 1){

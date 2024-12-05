@@ -23,16 +23,33 @@ if %errorlevel% == 0 (
     timeout /t 5 /nobreak >nul
 )
 
-:: Connect to Android device and wake up
-cd /d "%~dp0platform-tools"
-adb connect 192.168.1.100:5555
-adb shell input keyevent KEYCODE_WAKEUP
+:: Check if wireless ADB is connected
+@REM echo Checking ADB connection...
+@REM cd /d "%~dp0platform-tools"
+@REM adb connect 192.168.0.100:5555 >nul 2>&1
+@REM adb devices | findstr "192.168.0.100:5555" >nul
+@REM if %errorlevel% == 0 (
+@REM     echo Wireless ADB is connected.
+@REM ) else (
+@REM     echo Wireless ADB is not connected. Attempting to reconnect via USB...
+@REM     adb usb >nul 2>&1
+@REM     adb tcpip 5555
+@REM     adb connect 192.168.0.100:5555
+@REM     if %errorlevel% == 0 (
+@REM         echo Wireless ADB connection established.
+@REM     ) else (
+@REM         echo Could not establish wireless ADB connection. Please ensure the device is connected via USB first.
+@REM         exit /b
+@REM     )
+@REM )
 
-:: Start the Camo app on the Android device
-adb shell monkey -p com.reincubate.camo 1
+@REM :: Send ADB commands to wake up the device and start Camo
+@REM adb shell input keyevent KEYCODE_WAKEUP
+@REM adb shell monkey -p com.reincubate.camo 1
 
 :: Start the Node.js server in the background and capture the process ID (PID)
 cd ..
+cd Web_Application
 start /B node server.js
 set "NODE_PID=%!"
 
@@ -86,17 +103,16 @@ echo "Cleaning up..."
 taskkill /PID %NODE_PID% /F >nul 2>&1
 
 :: Terminate the Camo client process if it's still running
-taskkill /PID %CAMO_PID% /F >nul 2>&1
+@REM taskkill /PID %CAMO_PID% /F >nul 2>&1
 
 :: Terminate the Python process if it's still running
 taskkill /PID %PYTHON_PID% /F >nul 2>&1
 
 :: Navigate to the Android home screen and put the device to sleep
-adb shell input keyevent KEYCODE_HOME
-adb shell input keyevent KEYCODE_SLEEP
+@REM adb shell input keyevent KEYCODE_HOME
+@REM adb shell input keyevent KEYCODE_SLEEP
 
-:: Disconnect from the Android device
-adb disconnect 192.168.1.100:5555
+@REM :: Disconnect from the Android device
+@REM adb disconnect 192.168.0.100:5555
 
 exit /b
-

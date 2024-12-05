@@ -1,42 +1,42 @@
 #include <FastLED.h>
 
-// Define LED strip parameters
 #define LED_PIN     21  // Data pin for the LED strip
 #define NUM_LEDS    30  // Number of LEDs on your strip
-#define BRIGHTNESS  128
-#define LED_TYPE    WS2812B
-#define COLOR_ORDER RGB
+#define LED_TYPE    WS2812B  // Type of LED
+#define COLOR_ORDER GRB  // Color order (GRB for WS2812B)
 
 CRGB leds[NUM_LEDS];
 
-int brightness = 128; // Starting brightness (range 0 - 255)
+// Brightness levels to cycle through (0 to 255)
+int brightnessLevels[] = {50, 128, 255};
+int currentBrightnessIndex = 0;  // Start with the first brightness level
+
+unsigned long lastChangeTime = 0;  // Timer for cycling brightness
+unsigned long cycleInterval = 2000;  // Change brightness every 2 seconds
 
 void setup() {
-    // Initialize the LED strip
-    FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-    FastLED.setBrightness(brightness);
-
-    // Set up any additional pins or controllers here
-    Serial.begin(115200);
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);  // Initialize the LED strip
+  FastLED.show();  // Initialize the strip to off
 }
 
 void loop() {
-    // Example: set all LEDs to blue
-    fill_solid(leds, NUM_LEDS, CRGB::White);
-    FastLED.show();
+  // Check if it's time to change brightness
+  if (millis() - lastChangeTime >= cycleInterval) {
+    lastChangeTime = millis();  // Reset the timer
 
-    // Example brightness control with serial input for testing
-    if (Serial.available()) {
-        char command = Serial.read();
-        if (command == '+') {
-            brightness = min(255, brightness + 15);  // Increase brightness
-        } else if (command == '-') {
-            brightness = max(0, brightness - 15);    // Decrease brightness
-        }
-        FastLED.setBrightness(brightness);
-        FastLED.show();
-        Serial.println(brightness);
+    // Set all LEDs to white with the current brightness
+    for (int i = 0; i < NUM_LEDS; i++) {
+      leds[i] = CRGB::White;  // Set each LED to white
+      leds[i].fadeToBlackBy(255 - brightnessLevels[currentBrightnessIndex]);  // Apply brightness level
     }
 
-    delay(100); // Adjust delay as needed
+    // Update the strip to apply changes
+    FastLED.show();  
+
+    // Move to the next brightness level
+    currentBrightnessIndex++;
+    if (currentBrightnessIndex >= 3) {
+      currentBrightnessIndex = 0;  // Reset to the first brightness level
+    }
+  }
 }

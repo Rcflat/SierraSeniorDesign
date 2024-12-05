@@ -42,22 +42,15 @@ def toggle_recording(is_recording, frame):
         print("Recording stopped.")
         return False
     
-# def list_available_cameras():
-#     available_cameras = []
-#     for i in range(10):
-#         cap = cv2.VideoCapture(i)
-#         if cap.isOpened():
-#             available_cameras.append(i)
-#             cap.release()
-#     return available_cameras
-
 def list_available_cameras():
-    graph = FilterGraph()
-    devices = graph.get_input_devices()
-    cameras = {index: name for index, name in enumerate(devices)}
-    return cameras
+    available_cameras = []
+    for i in range(10):
+        cap = cv2.VideoCapture(i)
+        if cap.isOpened():
+            available_cameras.append(i)
+            cap.release()
+    return available_cameras
 
-    
 def initialize_camera():
     available_cameras = list_available_cameras()
     if not available_cameras:
@@ -71,6 +64,44 @@ def initialize_camera():
         return None
     print(f"Camera initialized at index {camera_index}.")
     return cap
+
+def list_available_cameras():
+    graph = FilterGraph()
+    devices = graph.get_input_devices()
+    cameras = {index: name for index, name in enumerate(devices)}
+    return cameras
+
+    
+def initialize_camera():
+    available_cameras = list_available_cameras()
+    if not available_cameras:
+        print("Warning: No available cameras found.")
+        return None
+
+    print("Available cameras:")
+    for index, name in available_cameras.items():
+        print(f"Index {index}: {name}")
+
+    # Attempt to find the "Camo" camera
+    camera_index = None
+    for index, name in available_cameras.items():
+        if "Camo" in name:
+            camera_index = index
+            break
+    
+    # If "Camo" is not found, use the first available camera
+    if camera_index is None:
+        print("Camo camera not found. Using the first available camera instead.")
+        camera_index = list(available_cameras.keys())[0]
+
+    cap = cv2.VideoCapture(camera_index)
+    if not cap.isOpened():
+        print(f"Warning: Could not open camera at index {camera_index}.")
+        return None
+
+    print(f"Camera initialized at index {camera_index} - {available_cameras[camera_index]}")
+    return cap
+    
 
 # ESP32 IP and port
 esp32_ip = "192.168.0.50"  # Replace with your ESP32's IP address
@@ -95,7 +126,7 @@ try:
             packet_size = len(message.encode())  # Get the size of the packet in bytes
             # print(f"Packet size: {packet_size} bytes")
             sock.sendto(message.encode(), (esp32_ip, esp32_port))
-            # print(f"Sent: {message}")
+            print(f"Sent: {message}")
 
             # Button 6: 'Menu' button to toggle recording
             if inputs['button_6'] == 1 and cap and cap.isOpened():
@@ -122,9 +153,10 @@ try:
         sock.settimeout(0.1)  # 500 ms timeout for response
         try:
             response, addr = sock.recvfrom(1024)
-            # print(f"Received from ESP32: {response.decode()}")
+            print(f"Received from ESP32: {response.decode()}")
         except socket.timeout:
             print("No response from ESP32.")
+            None
 
         # # Wait 100 ms before sending the next message
         # time.sleep(0.1)
