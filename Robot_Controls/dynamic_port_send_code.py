@@ -161,6 +161,7 @@ def main():
                     packet_size = len(message.encode())  # Get the size of the packet in bytes
                     sock.send(message.encode())
                     print(f"Sent test message: {message}")
+                    print(f"Packet Size: {packet_size}")
 
                     # Button 6: 'Menu' button to toggle recording
                     if inputs['button_6'] == 1 and cap and cap.isOpened():
